@@ -3,7 +3,8 @@ info:
   title: Todo API
   version: 1.0.0
 servers:
-- url: http://localhost:3001/api/
+  - url: http://localhost:3001/api
+  - url: https://projet2Hotel.rickel.online/api
 paths:
   /todos:
     get:

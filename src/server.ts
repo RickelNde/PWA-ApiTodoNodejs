@@ -16,7 +16,6 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
-
 app.use(helmet());
 app.use(cors({
   origin: '*',
@@ -24,12 +23,13 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+app.set('trust proxy', 1);
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret-a-changer',
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, sameSite: 'lax', secure: false, maxAge: 1000 * 60 * 60 },
+  cookie: { httpOnly: true, sameSite: 'lax', secure: true, maxAge: 1000 * 60 * 60 },
 }));
 
 app.use('/api/auth', createAuthRoutes());
