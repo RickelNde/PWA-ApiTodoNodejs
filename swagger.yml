@@ -1,0 +1,158 @@
+openapi: 3.0.0
+info:
+  title: Todo API
+  version: 1.0.0
+servers:
+- url: http://localhost:3001/api/
+paths:
+  /todos:
+    get:
+      summary: Get all todos
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              example:
+                - id: "550e8400-e29b-41d4-a716-446655440000"
+                  isCompleted: true
+                  createdAt: "2023-10-19T00:00:00.000Z"
+                  updatedAt: "2023-10-19T00:00:00.000Z"
+                  text: "todo completed"
+                - id: "550e8400-e29b-41d4-a716-446655440001"
+                  isCompleted: false
+                  createdAt: "2023-10-19T00:00:00.000Z"
+                  updatedAt: "2023-10-19T00:00:00.000Z"
+                  text: "todo not completed"
+  /todo:
+    post:
+      summary: Create a new todo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+      responses:
+        201:
+          description: Todo created
+          content:
+            application/json:
+              example:
+                - id: "550e8400-e29b-41d4-a716-446655440000"
+                  isCompleted: true
+                  createdAt: "2023-10-19T00:00:00.000Z"
+                  updatedAt: "2023-10-19T00:00:00.000Z"
+                  text: "todo completed"
+        400:
+          description: Bad request
+          content:
+            text/plain:
+              example: "Bad todo"
+  /todo/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: The ID of the todo
+        schema:
+          type: string
+    patch:
+      summary: Update a todo's completion status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isCompleted:
+                  type: boolean
+                text:
+                  type: string
+      responses:
+        204:
+          description: Todo patched
+        400:
+          description: Bad request
+          content:
+            text/plain:
+              example: "Bad todo"
+    delete:
+      summary: Delete a todo
+      responses:
+        204:
+          description: Todo deleted
+        400:
+          description: Bad request
+          content:
+            text/plain:
+            
+             example: "Bad todo"
+  /auth/register:
+    post:
+      summary: Créer un compte
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string, minLength: 3 }
+                password: { type: string, minLength: 8 }
+      responses:
+        201:
+          description: Compte créé
+          content:
+            application/json:
+              example: { id: "550e8400-e29b-41d4-a716-446655440000", username: "alice" }
+        400:
+          description: Données invalides
+        409:
+          description: Nom d'utilisateur déjà pris
+
+  /auth/login:
+    post:
+      summary: Se connecter (crée un cookie de session)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string }
+      responses:
+        200:
+          description: Connexion réussie
+          content:
+            application/json:
+              example: { id: "550e8400-e29b-41d4-a716-446655440000", username: "alice" }
+        401:
+          description: Identifiants invalides
+
+  /auth/logout:
+    post:
+      summary: Se déconnecter
+      responses:
+        204:
+          description: Session détruite
+
+  /auth/me:
+    get:
+      summary: Usager connecté
+      responses:
+        200:
+          description: Usager connecté
+          content:
+            application/json:
+              example: { id: "550e8400-e29b-41d4-a716-446655440000" }
+        401:
+          description: Non connecté

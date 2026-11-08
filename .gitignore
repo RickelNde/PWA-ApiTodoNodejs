@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+node_modules/
+.env
+.vs/
+dist/
+*.sqlite
+cookies.txt
+.DS_Store
