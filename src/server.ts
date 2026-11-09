@@ -1,10 +1,12 @@
+import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
 import yaml from 'yamljs';
-import dotenv from 'dotenv';
 import path from 'path';
+import { migrate } from 'drizzle-orm/mysql2/migrator';
+import { db } from './db/connection';
 
 import { createTodoRoutes } from './routes/todo.routes';
 import { createHealthRoutes } from './routes/health.routes';
@@ -53,10 +55,17 @@ process.on('uncaughtException', (error) => {
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
-
+async function demarrer() {
+  await migrate(db, { migrationsFolder: path.join(__dirname, '..', 'drizzle') });
+  console.log('Migrations appliquées.');
+  }
 app.listen(port, () => {
   console.log(`🚀 Server is running on port ${port}`);
   console.log(`📚 API Documentation available at http://localhost:${port}/swagger`);
   console.log(`❤️  Health check available at http://localhost:${port}/health`);
   console.log(`🏓 Ping endpoint available at http://localhost:${port}/ping`);
+});
+demarrer().catch((err) => {
+  console.error('Échec des migrations :', err);
+  process.exit(1);
 });
