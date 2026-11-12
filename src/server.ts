@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
@@ -14,6 +14,7 @@ import { errorHandler } from './middleware/error.middleware';
 import session from 'express-session';
 import { createAuthRoutes } from './routes/auth.routes';
 
+
 dotenv.config();
 
 const app = express();
@@ -27,19 +28,37 @@ app.use(cors({
 app.use(express.json());
 app.set('trust proxy', 1);
 
-app.use(session({
+const sessionConfig = {
+  name: 'userAuth',
   secret: process.env.SESSION_SECRET || 'dev-secret-a-changer',
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, sameSite: 'lax', secure: true, maxAge: 1000 * 60 * 60 },
-}));
+  cookie: {
+    maxAge: 1000 * 60 * 60,
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'lax' as const,
+  },
+};
+
+app.use(session(sessionConfig));
 
 app.use('/api/auth', createAuthRoutes());
 app.use('/api', createTodoRoutes());
 app.use('/', createHealthRoutes());
 
-const swaggerDocument = yaml.load(path.join(process.cwd(), 'swagger.yml'));
-app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use(
+  '/swagger',
+  (req: Request, res: Response, next: NextFunction) => {
+    res.set('Cache-Control', 'no-store');
+    next();
+  },
+  swaggerUi.serve,
+  (req: Request, res: Response, next: NextFunction) => {
+    const swaggerDocument = yaml.load(path.join(process.cwd(), 'swagger.yml'));
+    swaggerUi.setup(swaggerDocument)(req, res, next);
+  }
+);
 
 
 app.get('/ping', (req, res) => {
@@ -55,17 +74,17 @@ process.on('uncaughtException', (error) => {
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
-async function demarrer() {
-  await migrate(db, { migrationsFolder: path.join(__dirname, '..', 'drizzle') });
-  console.log('Migrations appliquées.');
-  }
+// async function demarrer() {
+//   await migrate(db, { migrationsFolder: path.join(__dirname, '..', 'drizzle') });
+//   console.log('Migrations appliquées.');
+//   }
 app.listen(port, () => {
   console.log(`🚀 Server is running on port ${port}`);
   console.log(`📚 API Documentation available at http://localhost:${port}/swagger`);
   console.log(`❤️  Health check available at http://localhost:${port}/health`);
   console.log(`🏓 Ping endpoint available at http://localhost:${port}/ping`);
 });
-demarrer().catch((err) => {
-  console.error('Échec des migrations :', err);
-  process.exit(1);
-});
+// demarrer().catch((err) => {
+//   console.error('Échec des migrations :', err);
+//   process.exit(1);
+// });

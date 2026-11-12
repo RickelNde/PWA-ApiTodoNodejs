@@ -5,6 +5,38 @@ info:
 servers:
   - url: http://localhost:3001/api
   - url: https://projet2Hotel.rickel.online/api
+components:
+  schemas:
+    PublicUser:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        firstName:
+          type: string
+          example: "Alice"
+        lastName:
+          type: string
+          example: "Martin"
+        email:
+          type: string
+          format: email
+          example: "alice@example.com"
+        created_At:
+          type: string
+          format: date-time
+          example: "2023-10-19T00:00:00.000Z"
+        updated_At:
+          type: string
+          format: date-time
+          example: "2023-10-19T00:00:00.000Z"
+    Message:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Déconnexion réussie."
 paths:
   /todos:
     get:
@@ -34,6 +66,7 @@ paths:
           application/json:
             schema:
               type: object
+              required: [text]
               properties:
                 text:
                   type: string
@@ -43,11 +76,11 @@ paths:
           content:
             application/json:
               example:
-                - id: "550e8400-e29b-41d4-a716-446655440000"
-                  isCompleted: true
-                  createdAt: "2023-10-19T00:00:00.000Z"
-                  updatedAt: "2023-10-19T00:00:00.000Z"
-                  text: "todo completed"
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                isCompleted: false
+                createdAt: "2023-10-19T00:00:00.000Z"
+                updatedAt: "2023-10-19T00:00:00.000Z"
+                text: "nouvelle tâche"
         400:
           description: Bad request
           content:
@@ -58,11 +91,11 @@ paths:
       - name: id
         in: path
         required: true
-        description: The ID of the todo
+        description: L'identifiant de la tâche
         schema:
           type: string
     patch:
-      summary: Update a todo's completion status
+      summary: Mettre à jour une tâche
       requestBody:
         required: true
         content:
@@ -76,23 +109,22 @@ paths:
                   type: string
       responses:
         204:
-          description: Todo patched
+          description: Tâche modifiée
         400:
           description: Bad request
           content:
             text/plain:
               example: "Bad todo"
     delete:
-      summary: Delete a todo
+      summary: Supprimer une tâche
       responses:
         204:
-          description: Todo deleted
+          description: Tâche supprimée
         400:
           description: Bad request
           content:
             text/plain:
-            
-             example: "Bad todo"
+              example: "Bad todo"
   /auth/register:
     post:
       summary: Créer un compte
@@ -102,21 +134,43 @@ paths:
           application/json:
             schema:
               type: object
-              required: [username, password]
+              required: [firstName, lastName, email, passeWord]
               properties:
-                username: { type: string, minLength: 3 }
-                password: { type: string, minLength: 8 }
+                firstName:
+                  type: string
+                  example: "Alice"
+                lastName:
+                  type: string
+                  example: "Martin"
+                email:
+                  type: string
+                  format: email
+                  example: "alice@example.com"
+                passeWord:
+                  type: string
+                  minLength: 8
+                  example: "motdepasse123"
       responses:
         201:
           description: Compte créé
           content:
             application/json:
-              example: { id: "550e8400-e29b-41d4-a716-446655440000", username: "alice" }
+              schema:
+                $ref: '#/components/schemas/PublicUser'
         400:
           description: Données invalides
+          content:
+            application/json:
+              example:
+                message: "Le mot de passe doit contenir au moins 8 caractères."
         409:
-          description: Nom d'utilisateur déjà pris
-
+          description: Email déjà utilisé
+          content:
+            application/json:
+              example:
+                message: "Cet email est déjà utilisé."
+        500:
+          description: Erreur serveur
   /auth/login:
     post:
       summary: Se connecter (crée un cookie de session)
@@ -126,34 +180,45 @@ paths:
           application/json:
             schema:
               type: object
-              required: [username, password]
+              required: [email, passeWord]
               properties:
-                username: { type: string }
-                password: { type: string }
+                email:
+                  type: string
+                  format: email
+                  example: "alice@example.com"
+                passeWord:
+                  type: string
+                  example: "motdepasse123"
       responses:
         200:
-          description: Connexion réussie
+          description: Connexion réussie (cookie userAuth)
           content:
             application/json:
-              example: { id: "550e8400-e29b-41d4-a716-446655440000", username: "alice" }
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PublicUser'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Bienvenue Alice"
         401:
           description: Identifiants invalides
-
+          content:
+            application/json:
+              example:
+                message: "Email ou mot de passe incorrect."
+        500:
+          description: Échec de la connexion
   /auth/logout:
     post:
       summary: Se déconnecter
       responses:
-        204:
-          description: Session détruite
-
-  /auth/me:
-    get:
-      summary: Usager connecté
-      responses:
         200:
-          description: Usager connecté
+          description: Déconnexion réussie
           content:
             application/json:
-              example: { id: "550e8400-e29b-41d4-a716-446655440000" }
-        401:
-          description: Non connecté
+              schema:
+                $ref: '#/components/schemas/Message'
+        500:
+          description: Échec de la déconnexion

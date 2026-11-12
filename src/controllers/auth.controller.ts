@@ -1,70 +1,86 @@
-import { Request, Response } from 'express';
+import { Request, Response,NextFunction } from 'express';
 import { AuthService } from '../services/auth.service';
+import { CreateUserRequest } from '../types/user.types';
 import 'express-session';
 
+const authService = new AuthService();
 export class AuthController {
-  private authService = new AuthService();
 
-  register = async (req: Request, res: Response) => {
-    const username = String(req.body?.username ?? '').trim();
-    const password = String(req.body?.password ?? '');
+  register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+   const userRequest: CreateUserRequest={
+    firstName:req.body.firstName,
+    lastName:req.body.lastName,
+    email:req.body.email,
+    passWord:req.body.passeWord
 
-    if (username.length < 3) {
-      return res.status(400).json({ message: 'Le nom d’utilisateur doit contenir au moins 3 caractères.' });
+   }
+
+    if (userRequest.email.length < 3) {
+       res.status(400).json({ message: 'Le nom d’utilisateur doit contenir au moins 3 caractères.' });
+       return
     }
-    if (password.length < 8) {
-      return res.status(400).json({ message: 'Le mot de passe doit contenir au moins 8 caractères.' });
+    if (userRequest.passWord.length < 8) {
+     res.status(400).json({ message: 'Le mot de passe doit contenir au moins 8 caractères.' });
+     
     }
 
     try {
-      const user = await this.authService.register(username, password);
-      return res.status(201).json(user);
+      const user = await authService.register(userRequest);
+       res.status(201).json(user);
+       return
     } catch (error: any) {
-      if (error.message === 'USERNAME_TAKEN') {
-        return res.status(409).json({ message: 'Ce nom d’utilisateur est déjà pris.' });
-      }
-      console.error(error);
-      return res.status(500).json({ message: 'Erreur interne.' });
-    }
+  if (error.message === 'userExiste') {
+    res.status(409).json({ message: 'Cet email est déjà utilisé.' });
+    return;
+  }
+  console.error('ERREUR REGISTER :', error);
+  res.status(500).json({
+    message: 'impossible de creer le user.',
+    detail: error.message,
+    code: error.code,
+    sqlMessage: error.sqlMessage,
+  });
+  return;
+}
   };
 
-  login = async (req: Request, res: Response) => {
-    const username = String(req.body?.username ?? '').trim();
-    const password = String(req.body?.password ?? '');
+  login = async (req: Request, res: Response): Promise<void> => {
+  const user = await authService.login(req.body.email, req.body.passeWord);
+  if (!user) {
+    res.status(401).json({ message: 'Email ou mot de passe incorrect.' });
+    return;
+  }
 
-    try {
-      const user = await this.authService.login(username, password);
-      if (!user) {
-        return res.status(401).json({ message: 'Identifiants invalides.' });
-      }
-
-      // Nouvelle session à chaque connexion
-      req.session.regenerate((err) => {
-        if (err) return res.status(500).json({ message: 'Erreur interne.' });
-        req.session.userId = user.id;
-        req.session.save((err2) => {
-          if (err2) return res.status(500).json({ message: 'Erreur interne.' });
-          return res.json(user);
-        });
-      });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: 'Erreur interne.' });
+  req.session.regenerate((error) => {
+    if (error) {
+      res.status(500).json({ message: 'Échec de la connexion.' });
+      return;
     }
-  };
+    req.session.userId = user.id;
+    req.session.save((saveError) => {
+      if (saveError) {
+        res.status(500).json({ message: 'Échec de la connexion.' });
+        return;
+      }
+      res.status(200).json({ message: `Bienvenue ${user.firstName}`, ...user });
+    });
+  });
+};
 
   logout = (req: Request, res: Response) => {
-    req.session.destroy((err) => {
-      if (err) return res.status(500).json({ message: 'Erreur interne.' });
-      res.clearCookie('connect.sid');
-      return res.status(204).end();
-    });
-  };
+  if (!req.session) {
+    return res.status(200).json({ message: 'Non connecté.' });
+  }
 
-  me = (req: Request, res: Response) => {
-    if (!req.session.userId) {
-      return res.status(401).json({ message: 'Non connecté.' });
+  req.session.destroy((error) => {
+    if (error) {
+      return res.status(500).json({ message: 'Échec de la déconnexion.' });
     }
-    return res.json({ id: req.session.userId });
-  };
+    res.clearCookie('userAuth');
+    return res.status(200).json({ message: 'Déconnexion réussie.' });
+  });
+};
+
 }
+// "email": "alice@example.com",
+//   "passeWord": "motdepasse123"
