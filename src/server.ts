@@ -74,17 +74,17 @@ process.on('uncaughtException', (error) => {
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
-// async function demarrer() {
-//   await migrate(db, { migrationsFolder: path.join(__dirname, '..', 'drizzle') });
-//   console.log('Migrations appliquées.');
-//   }
+async function demarrer() {
+  await migrate(db, { migrationsFolder: path.join(__dirname, '..', 'drizzle') });
+   console.log('Migrations appliquées.');
+   }
 app.listen(port, () => {
   console.log(`🚀 Server is running on port ${port}`);
   console.log(`📚 API Documentation available at http://localhost:${port}/swagger`);
   console.log(`❤️  Health check available at http://localhost:${port}/health`);
   console.log(`🏓 Ping endpoint available at http://localhost:${port}/ping`);
 });
-// demarrer().catch((err) => {
-//   console.error('Échec des migrations :', err);
-//   process.exit(1);
-// });
+ demarrer().catch((err) => {
+   console.error('Échec des migrations :', err);
+  process.exit(1);
+ });
