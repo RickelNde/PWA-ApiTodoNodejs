@@ -12,6 +12,9 @@ import { createTodoRoutes } from './routes/todo.routes';
 import { createHealthRoutes } from './routes/health.routes';
 import { errorHandler } from './middleware/error.middleware';
 import session from 'express-session';
+import { createRoomTypeRoutes } from './routes/roomtype.routes';
+import { createBedTypeRoutes } from './routes/bedtype.routes';
+import { createBedRoomRoutes } from './routes/bedroom.routes';
 import { createAuthRoutes } from './routes/auth.routes';
 
 
@@ -46,6 +49,9 @@ app.use(session(sessionConfig));
 app.use('/api/auth', createAuthRoutes());
 app.use('/api', createTodoRoutes());
 app.use('/', createHealthRoutes());
+app.use('/api', createRoomTypeRoutes());
+app.use('/api', createBedTypeRoutes());
+app.use('/api', createBedRoomRoutes());
 
 app.use(
   '/swagger',

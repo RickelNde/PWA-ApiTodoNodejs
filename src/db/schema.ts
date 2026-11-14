@@ -34,10 +34,18 @@ export const bedType = mysqlTable('bedType', {
   created_At: timestamp('created_At').defaultNow().notNull(),
   updated_At: timestamp('updated_At').defaultNow().onUpdateNow().notNull(),
 }); 
+export const roomType = mysqlTable('roomType', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  description: varchar('description', { length: 100 }).notNull().unique(),
+  created_At: timestamp('created_At').defaultNow().notNull(),
+  updated_At: timestamp('updated_At').defaultNow().onUpdateNow().notNull(),
+});
+
 export const bedRooms = mysqlTable('bedRooms', {
   id: varchar("id", { length: 36 }).primaryKey(),
   bedroomsNumber: int("bedrooms_number").notNull().unique(),
-  bedroomType: varchar("bedroom_type", { length: 50 }).notNull(),
+ roomTypeId: varchar('room_type_id', { length: 36 }).notNull()
+  .references(() => roomType.id),
   description: varchar("description", { length: 200 }).notNull(),
   nbMaxClients: int("nb_max_clients").notNull(),
   sizeInMeterSquare: decimal("size_in_meter_square", { precision: 6, scale: 2 }).notNull(),

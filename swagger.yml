@@ -37,6 +37,166 @@ components:
         message:
           type: string
           example: "Déconnexion réussie."
+    RoomType:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "double"
+        description:
+          type: string
+          example: "Double"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    BedType:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "lit_double"
+        description:
+          type: string
+          example: "Lit double"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    BedRoom:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "b3c1d2e4-5f6a-4b7c-8d9e-0f1a2b3c4d5e"
+        bedroomsNumber:
+          type: integer
+          example: 101
+        roomTypeId:
+          type: string
+          example: "double"
+        description:
+          type: string
+          example: "Vue sur la mer, balcon, climatisation"
+        nbMaxClients:
+          type: integer
+          example: 2
+        sizeInMeterSquare:
+          type: number
+          example: 24.5
+        nbBeds:
+          type: integer
+          example: 2
+        bed1Id:
+          type: string
+          example: "lit_double"
+        bed2Id:
+          type: string
+          nullable: true
+          example: "lit_simple"
+        price:
+          type: number
+          example: 120.00
+        nomHotel:
+          type: string
+          example: "Hôtel Rickel"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateBedRoomRequest:
+      type: object
+      required: [bedroomsNumber, roomTypeId, description, nbMaxClients, sizeInMeterSquare, nbBeds, bed1Id, price, nomHotel]
+      properties:
+        bedroomsNumber:
+          type: integer
+          example: 101
+        roomTypeId:
+          type: string
+          example: "double"
+        description:
+          type: string
+          maxLength: 200
+          example: "Vue sur la mer, balcon, climatisation"
+        nbMaxClients:
+          type: integer
+          example: 2
+        sizeInMeterSquare:
+          type: number
+          example: 24.5
+        nbBeds:
+          type: integer
+          minimum: 1
+          maximum: 2
+          example: 2
+        bed1Id:
+          type: string
+          example: "lit_double"
+        bed2Id:
+          type: string
+          nullable: true
+          description: Obligatoire si nbBeds = 2, ignoré si nbBeds = 1
+          example: "lit_simple"
+        price:
+          type: number
+          example: 120.00
+        nomHotel:
+          type: string
+          example: "Hôtel Rickel"
+    UpdateBedRoomRequest:
+      type: object
+      description: Tous les champs sont facultatifs
+      properties:
+        bedroomsNumber:
+          type: integer
+        roomTypeId:
+          type: string
+        description:
+          type: string
+          maxLength: 200
+        nbMaxClients:
+          type: integer
+        sizeInMeterSquare:
+          type: number
+        nbBeds:
+          type: integer
+          minimum: 1
+          maximum: 2
+        bed1Id:
+          type: string
+        bed2Id:
+          type: string
+          nullable: true
+        price:
+          type: number
+        nomHotel:
+          type: string
+    RoomTypeRequest:
+      type: object
+      required: [description]
+      properties:
+        description:
+          type: string
+          example: "Suite"
+    BedTypeRequest:
+      type: object
+      required: [description]
+      properties:
+        description:
+          type: string
+          example: "Lit king size"
+    ErrorMessage:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Référence inconnue ou numéro de chambre déjà pris."
 paths:
   /todos:
     get:
@@ -52,11 +212,6 @@ paths:
                   createdAt: "2023-10-19T00:00:00.000Z"
                   updatedAt: "2023-10-19T00:00:00.000Z"
                   text: "todo completed"
-                - id: "550e8400-e29b-41d4-a716-446655440001"
-                  isCompleted: false
-                  createdAt: "2023-10-19T00:00:00.000Z"
-                  updatedAt: "2023-10-19T00:00:00.000Z"
-                  text: "todo not completed"
   /todo:
     post:
       summary: Create a new todo
@@ -73,25 +228,13 @@ paths:
       responses:
         201:
           description: Todo created
-          content:
-            application/json:
-              example:
-                id: "550e8400-e29b-41d4-a716-446655440000"
-                isCompleted: false
-                createdAt: "2023-10-19T00:00:00.000Z"
-                updatedAt: "2023-10-19T00:00:00.000Z"
-                text: "nouvelle tâche"
         400:
           description: Bad request
-          content:
-            text/plain:
-              example: "Bad todo"
   /todo/{id}:
     parameters:
       - name: id
         in: path
         required: true
-        description: L'identifiant de la tâche
         schema:
           type: string
     patch:
@@ -112,9 +255,6 @@ paths:
           description: Tâche modifiée
         400:
           description: Bad request
-          content:
-            text/plain:
-              example: "Bad todo"
     delete:
       summary: Supprimer une tâche
       responses:
@@ -122,9 +262,6 @@ paths:
           description: Tâche supprimée
         400:
           description: Bad request
-          content:
-            text/plain:
-              example: "Bad todo"
   /auth/register:
     post:
       summary: Créer un compte
@@ -159,16 +296,8 @@ paths:
                 $ref: '#/components/schemas/PublicUser'
         400:
           description: Données invalides
-          content:
-            application/json:
-              example:
-                message: "Le mot de passe doit contenir au moins 8 caractères."
         409:
           description: Email déjà utilisé
-          content:
-            application/json:
-              example:
-                message: "Cet email est déjà utilisé."
         500:
           description: Erreur serveur
   /auth/login:
@@ -195,19 +324,9 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/PublicUser'
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                        example: "Bienvenue Alice"
+                $ref: '#/components/schemas/PublicUser'
         401:
           description: Identifiants invalides
-          content:
-            application/json:
-              example:
-                message: "Email ou mot de passe incorrect."
         500:
           description: Échec de la connexion
   /auth/logout:
@@ -222,3 +341,229 @@ paths:
                 $ref: '#/components/schemas/Message'
         500:
           description: Échec de la déconnexion
+  /roomtypes:
+    get:
+      summary: Lister les types de chambre (pour la liste déroulante)
+      responses:
+        200:
+          description: Liste des types de chambre
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoomType'
+  /roomtype:
+    post:
+      summary: Créer un type de chambre
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomTypeRequest'
+      responses:
+        201:
+          description: Type de chambre créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomType'
+        400:
+          description: Description manquante
+        409:
+          description: Ce type existe déjà
+  /roomtype/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    patch:
+      summary: Modifier un type de chambre
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomTypeRequest'
+      responses:
+        200:
+          description: Type modifié
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomType'
+        404:
+          description: Type introuvable
+        409:
+          description: Ce type existe déjà
+    delete:
+      summary: Supprimer un type de chambre
+      responses:
+        204:
+          description: Type supprimé
+        404:
+          description: Type introuvable
+        409:
+          description: Ce type est utilisé par une chambre
+  /bedtypes:
+    get:
+      summary: Lister les types de lit (pour la liste déroulante)
+      responses:
+        200:
+          description: Liste des types de lit
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BedType'
+  /bedtype:
+    post:
+      summary: Créer un type de lit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BedTypeRequest'
+      responses:
+        201:
+          description: Type de lit créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BedType'
+        400:
+          description: Description manquante
+        409:
+          description: Ce type existe déjà
+  /bedtype/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    patch:
+      summary: Modifier un type de lit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BedTypeRequest'
+      responses:
+        200:
+          description: Type modifié
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BedType'
+        404:
+          description: Type introuvable
+        409:
+          description: Ce type existe déjà
+    delete:
+      summary: Supprimer un type de lit
+      responses:
+        204:
+          description: Type supprimé
+        404:
+          description: Type introuvable
+        409:
+          description: Ce type est utilisé par une chambre
+  /bedrooms:
+    get:
+      summary: Lister les chambres
+      responses:
+        200:
+          description: Liste des chambres
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BedRoom'
+  /bedroom:
+    post:
+      summary: Créer une chambre
+      description: Si nbBeds = 2, bed2Id est obligatoire. Si nbBeds = 1, bed2Id est ignoré.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBedRoomRequest'
+            example:
+              bedroomsNumber: 101
+              roomTypeId: "double"
+              description: "Vue sur la mer, balcon, climatisation"
+              nbMaxClients: 2
+              sizeInMeterSquare: 24.5
+              nbBeds: 2
+              bed1Id: "lit_double"
+              bed2Id: "lit_simple"
+              price: 120.00
+              nomHotel: "Hôtel Rickel"
+      responses:
+        201:
+          description: Chambre créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BedRoom'
+        400:
+          description: Données invalides ou référence inconnue (type de chambre, type de lit, numéro déjà pris)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        500:
+          description: Erreur serveur
+  /bedroom/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Récupérer une chambre
+      responses:
+        200:
+          description: Chambre trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BedRoom'
+        404:
+          description: Chambre introuvable
+    patch:
+      summary: Modifier une chambre (champs facultatifs)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBedRoomRequest'
+      responses:
+        200:
+          description: Chambre modifiée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BedRoom'
+        400:
+          description: Référence inconnue ou numéro déjà pris
+        404:
+          description: Chambre introuvable
+    delete:
+      summary: Supprimer une chambre
+      responses:
+        204:
+          description: Chambre supprimée
+        404:
+          description: Chambre introuvable

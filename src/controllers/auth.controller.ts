@@ -33,7 +33,6 @@ export class AuthController {
     res.status(409).json({ message: 'Cet email est déjà utilisé.' });
     return;
   }
-  console.error('ERREUR REGISTER :', error);
   res.status(500).json({
     message: 'impossible de creer le user.',
     detail: error.message,
