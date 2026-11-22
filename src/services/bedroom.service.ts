@@ -31,7 +31,7 @@ export class BedRoomService {
       bed1Id: data.bed1Id,
       bed2Id: data.bed2Id ?? null,
       price: data.price,
-      nomHotel: data.nomHotel,
+      nomHotel: 'Hotel Rickel',
       createdAt: now,
       updatedAt: now,
     };
@@ -39,13 +39,13 @@ export class BedRoomService {
     return await bedRoomRepository.create(bedRoom);
   }
 
-  async updateBedRoom(id: string, data: UpdateBedRoomRequest): Promise<BedRoom | null> {
-    const existing = await this.getBedRoomById(id);
-    if (!existing) {
-      return null;
-    }
-    return await bedRoomRepository.update(id, data);
+ async updateBedRoom(id: string, data: UpdateBedRoomRequest): Promise<BedRoom | null> {
+  const existing = await this.getBedRoomById(id);
+  if (!existing) {
+    return null;
   }
+  return await bedRoomRepository.update(id, { bedroomsNumber: data.bedroomsNumber });
+}
 
   async deleteBedRoom(id: string): Promise<BedRoom | null> {
     const existing = await this.getBedRoomById(id);

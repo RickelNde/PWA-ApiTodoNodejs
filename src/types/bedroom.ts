@@ -30,13 +30,4 @@ export interface CreateBedRoomRequest {
 
 export interface UpdateBedRoomRequest {
   bedroomsNumber?: number;
-  roomTypeId?: string;
-  description?: string;
-  nbMaxClients?: number;
-  sizeInMeterSquare?: number;
-  nbBeds?: number;
-  bed1Id?: string;
-  bed2Id?: string | null;
-  price?: number;
-  nomHotel?: string;
 }

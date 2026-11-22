@@ -64,6 +64,10 @@ export class TodoService {
 
 
   // Les autres actions du service (update, delete, etc.) peuvent être ajoutées ici
+  //appId
+  //clientId
+  //Rponse Transacationaid
+  //apres aprouvre renvoie ok
   
 }
 

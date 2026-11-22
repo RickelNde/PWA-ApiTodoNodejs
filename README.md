@@ -48,3 +48,5 @@ J'aimerais que tu déploies cet API sur un VPS digital ocean. Les contraintes so
 - Jamais le fichier .env doit être dans ton projet (il contient le mot de passe vers ta base de données). Tu dois donc gérer les variables d'environnement dans le serveur directement.
   - Soit tu crée un autre fichier .env (moins sécuritaire car il contient des informations critiques)
   - Soit tu lance le serveur avec une ligne dans ce genre : `PORT=3001 NODE_ENV=production DB_HOST=localhost ...ETC..... node dist/server.js`
+## Validation des champs
+  https://react-hook-form.com/get-started#ReactNative

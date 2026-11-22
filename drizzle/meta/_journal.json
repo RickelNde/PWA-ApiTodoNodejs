@@ -29,6 +29,20 @@
       "when": 1794603478362,
       "tag": "0003_stiff_blob",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1795304590824,
+      "tag": "0004_bitter_scarlet_spider",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1795383999531,
+      "tag": "0005_fresh_invaders",
+      "breakpoints": true
     }
   ]
 }

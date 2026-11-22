@@ -1,9 +1,16 @@
 import { Request, Response,NextFunction } from 'express';
 import { AuthService } from '../services/auth.service';
 import { CreateUserRequest } from '../types/user.types';
-import 'express-session';
+import { signToken,verifyToken } from '../types/jwt';
 
 const authService = new AuthService();
+
+const optionsCookie = {
+  httpOnly: true,                               
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  path: '/',
+};
 export class AuthController {
 
   register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -44,40 +51,56 @@ export class AuthController {
   };
 
   login = async (req: Request, res: Response): Promise<void> => {
-  const user = await authService.login(req.body.email, req.body.passeWord);
-  if (!user) {
-    res.status(401).json({ message: 'Email ou mot de passe incorrect.' });
+    try {
+      const user = await authService.login(req.body.email, req.body.passeWord);
+
+      if (!user) {
+        res.status(401).json({ message: 'Email ou mot de passe incorrect.' });
+        return;
+      }
+
+    
+      const token = signToken({ role: user.roleId });
+
+
+      res.cookie('token', token, {
+        ...optionsCookie,
+        maxAge: 60 * 60 * 1000, 
+      });
+
+      res.status(200).json({
+        message: `Bienvenue ${user.firstName}`,
+        user: {
+          email: user.email,
+          firstName: user.firstName,
+          role: user.roleId,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Échec de la connexion.' });
+    }
+  };
+
+  logout = (req: Request, res: Response): void => {
+    res.clearCookie('token', optionsCookie);
+    res.status(200).json({ message: 'Déconnexion réussie.' });
+  };
+
+
+ me = (req: Request, res: Response): void => {
+  const token = req.cookies?.token;
+
+  if (!token) {
+    res.status(401).json({ message: 'Non connecté.' });
     return;
   }
 
-  req.session.regenerate((error) => {
-    if (error) {
-      res.status(500).json({ message: 'Échec de la connexion.' });
-      return;
-    }
-    req.session.userId = user.id;
-    req.session.save((saveError) => {
-      if (saveError) {
-        res.status(500).json({ message: 'Échec de la connexion.' });
-        return;
-      }
-      res.status(200).json({ message: `Bienvenue ${user.firstName}`, ...user });
-    });
-  });
-};
-
-  logout = (req: Request, res: Response) => {
-  if (!req.session) {
-    return res.status(200).json({ message: 'Non connecté.' });
+  try {
+    const user = verifyToken(token);
+    res.status(200).json({ user });
+  } catch {
+    res.status(401).json({ message: 'Connexion expirée, reconnecte-toi.' });
   }
-
-  req.session.destroy((error) => {
-    if (error) {
-      return res.status(500).json({ message: 'Échec de la déconnexion.' });
-    }
-    res.clearCookie('userAuth');
-    return res.status(200).json({ message: 'Déconnexion réussie.' });
-  });
 };
 
 }

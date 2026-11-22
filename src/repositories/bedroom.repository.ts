@@ -42,15 +42,6 @@ export class BedRoomRepository {
   async update(id: string, data: UpdateBedRoomRequest): Promise<BedRoom | null> {
   await db.update(bedRooms).set({
     bedroomsNumber: data.bedroomsNumber,
-    roomTypeId: data.roomTypeId,
-    description: data.description,
-    nbMaxClients: data.nbMaxClients,
-    sizeInMeterSquare: data.sizeInMeterSquare !== undefined ? String(data.sizeInMeterSquare) : undefined,
-    nbBeds: data.nbBeds,
-    bed1Id: data.bed1Id,
-    bed2Id: data.bed2Id,
-    price: data.price !== undefined ? String(data.price) : undefined,
-    nomHotel: data.nomHotel,
   }).where(eq(bedRooms.id, id));
 
   return this.findById(id);

@@ -28,22 +28,30 @@ export class BedRoomController {
   };
 
   create = async (req: Request, res: Response) => {
-    const data = req.body as CreateBedRoomRequest;
+  const data = req.body as CreateBedRoomRequest;
 
-    if (data.nbBeds === 1) {
-      data.bed2Id = null;
-    }
-    if (data.nbBeds === 2 && !data.bed2Id) {
-      return res.status(400).json({ message: 'bed2Id est requis pour 2 lits.' });
-    }
+  if (
+    data.bedroomsNumber === undefined || !data.roomTypeId || !data.description ||
+    data.nbMaxClients === undefined || data.sizeInMeterSquare === undefined ||
+    data.nbBeds === undefined || !data.bed1Id || data.price === undefined || !data.nomHotel
+  ) {
+    return res.status(400).json({ message: 'Champs obligatoires manquants.' });
+  }
 
-    try {
-      const bedRoom = await bedRoomService.createBedRoom(data);
-      res.status(201).json(bedRoom);
-    } catch (error) {
-      res.status(500).json({ message: 'Erreur serveur.' });
-    }
-  };
+  if (data.nbBeds === 1) {
+    data.bed2Id = null;
+  }
+  if (data.nbBeds === 2 && !data.bed2Id) {
+    return res.status(400).json({ message: 'bed2Id est requis pour 2 lits.' });
+  }
+
+  try {
+    const bedRoom = await bedRoomService.createBedRoom(data);
+    res.status(201).json(bedRoom);
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur serveur.' });
+  }
+};
 
   update = async (req: Request, res: Response) => {
     const data = req.body as UpdateBedRoomRequest;

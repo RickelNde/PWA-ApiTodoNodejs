@@ -5,7 +5,14 @@ info:
 servers:
   - url: http://localhost:3001/api
   - url: https://projet2Hotel.rickel.online/api
+
 components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+
   schemas:
     PublicUser:
       type: object
@@ -23,6 +30,10 @@ components:
           type: string
           format: email
           example: "alice@example.com"
+        roleId:
+          type: string
+          enum: [user, admin]
+          example: "user"
         created_At:
           type: string
           format: date-time
@@ -31,12 +42,41 @@ components:
           type: string
           format: date-time
           example: "2023-10-19T00:00:00.000Z"
+
+    LoginResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Bienvenue Alice"
+        user:
+          type: object
+          properties:
+            email:
+              type: string
+              example: "alice@example.com"
+            firstName:
+              type: string
+              example: "Alice"
+            role:
+              type: string
+              enum: [user, admin]
+              example: "user"
+
     Message:
       type: object
       properties:
         message:
           type: string
           example: "Déconnexion réussie."
+
+    ErrorMessage:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Référence inconnue ou numéro de chambre déjà pris."
+
     RoomType:
       type: object
       properties:
@@ -52,6 +92,7 @@ components:
         updatedAt:
           type: string
           format: date-time
+
     BedType:
       type: object
       properties:
@@ -67,6 +108,7 @@ components:
         updatedAt:
           type: string
           format: date-time
+
     BedRoom:
       type: object
       properties:
@@ -110,6 +152,7 @@ components:
         updatedAt:
           type: string
           format: date-time
+
     CreateBedRoomRequest:
       type: object
       required: [bedroomsNumber, roomTypeId, description, nbMaxClients, sizeInMeterSquare, nbBeds, bed1Id, price, nomHotel]
@@ -149,6 +192,7 @@ components:
         nomHotel:
           type: string
           example: "Hôtel Rickel"
+
     UpdateBedRoomRequest:
       type: object
       description: Tous les champs sont facultatifs
@@ -177,6 +221,7 @@ components:
           type: number
         nomHotel:
           type: string
+
     RoomTypeRequest:
       type: object
       required: [description]
@@ -184,6 +229,7 @@ components:
         description:
           type: string
           example: "Suite"
+
     BedTypeRequest:
       type: object
       required: [description]
@@ -191,19 +237,16 @@ components:
         description:
           type: string
           example: "Lit king size"
-    ErrorMessage:
-      type: object
-      properties:
-        message:
-          type: string
-          example: "Référence inconnue ou numéro de chambre déjà pris."
+
 paths:
   /todos:
     get:
-      summary: Get all todos
+      summary: Lister les tâches (connecté, user ou admin)
+      security:
+        - cookieAuth: []
       responses:
-        200:
-          description: Successful response
+        '200':
+          description: Liste des tâches
           content:
             application/json:
               example:
@@ -212,9 +255,18 @@ paths:
                   createdAt: "2023-10-19T00:00:00.000Z"
                   updatedAt: "2023-10-19T00:00:00.000Z"
                   text: "todo completed"
+        '401':
+          description: Non connecté ou connexion expirée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+
   /todo:
     post:
-      summary: Create a new todo
+      summary: Créer une tâche (connecté, user ou admin)
+      security:
+        - cookieAuth: []
       requestBody:
         required: true
         content:
@@ -226,10 +278,17 @@ paths:
                 text:
                   type: string
       responses:
-        201:
-          description: Todo created
-        400:
-          description: Bad request
+        '201':
+          description: Tâche créée
+        '400':
+          description: Données invalides
+        '401':
+          description: Non connecté ou connexion expirée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+
   /todo/{id}:
     parameters:
       - name: id
@@ -238,7 +297,9 @@ paths:
         schema:
           type: string
     patch:
-      summary: Mettre à jour une tâche
+      summary: Mettre à jour une tâche (connecté, user ou admin)
+      security:
+        - cookieAuth: []
       requestBody:
         required: true
         content:
@@ -251,17 +312,48 @@ paths:
                 text:
                   type: string
       responses:
-        204:
+        '204':
           description: Tâche modifiée
-        400:
-          description: Bad request
+        '400':
+          description: Données invalides
+        '401':
+          description: Non connecté ou connexion expirée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '404':
+          description: Tâche introuvable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
     delete:
-      summary: Supprimer une tâche
+      summary: Supprimer une tâche (admin seulement)
+      security:
+        - cookieAuth: []
       responses:
-        204:
+        '204':
           description: Tâche supprimée
-        400:
-          description: Bad request
+        '401':
+          description: Non connecté ou connexion expirée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '403':
+          description: Réservé aux admins
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '404':
+          description: Tâche introuvable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
   /auth/register:
     post:
       summary: Créer un compte
@@ -288,21 +380,30 @@ paths:
                   minLength: 8
                   example: "motdepasse123"
       responses:
-        201:
+        '201':
           description: Compte créé
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PublicUser'
-        400:
+        '400':
           description: Données invalides
-        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '409':
           description: Email déjà utilisé
-        500:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '500':
           description: Erreur serveur
+
   /auth/login:
     post:
-      summary: Se connecter (crée un cookie de session)
+      summary: Se connecter (pose un cookie token contenant le rôle)
       requestBody:
         required: true
         content:
@@ -319,33 +420,64 @@ paths:
                   type: string
                   example: "motdepasse123"
       responses:
-        200:
-          description: Connexion réussie (cookie userAuth)
+        '200':
+          description: Connexion réussie, le cookie token est posé
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PublicUser'
-        401:
-          description: Identifiants invalides
-        500:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Email ou mot de passe incorrect
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '500':
           description: Échec de la connexion
+
+  /auth/me:
+    get:
+      summary: Savoir qui est connecté et quel est son rôle
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Utilisateur connecté
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        enum: [user, admin]
+                        example: "user"
+        '401':
+          description: Non connecté ou connexion expirée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+
   /auth/logout:
     post:
-      summary: Se déconnecter
+      summary: Se déconnecter (supprime le cookie token)
       responses:
-        200:
+        '200':
           description: Déconnexion réussie
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Message'
-        500:
-          description: Échec de la déconnexion
+
   /roomtypes:
     get:
       summary: Lister les types de chambre (pour la liste déroulante)
       responses:
-        200:
+        '200':
           description: Liste des types de chambre
           content:
             application/json:
@@ -353,6 +485,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/RoomType'
+
   /roomtype:
     post:
       summary: Créer un type de chambre
@@ -363,16 +496,17 @@ paths:
             schema:
               $ref: '#/components/schemas/RoomTypeRequest'
       responses:
-        201:
+        '201':
           description: Type de chambre créé
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoomType'
-        400:
+        '400':
           description: Description manquante
-        409:
+        '409':
           description: Ce type existe déjà
+
   /roomtype/{id}:
     parameters:
       - name: id
@@ -389,30 +523,31 @@ paths:
             schema:
               $ref: '#/components/schemas/RoomTypeRequest'
       responses:
-        200:
+        '200':
           description: Type modifié
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoomType'
-        404:
+        '404':
           description: Type introuvable
-        409:
+        '409':
           description: Ce type existe déjà
     delete:
       summary: Supprimer un type de chambre
       responses:
-        204:
+        '204':
           description: Type supprimé
-        404:
+        '404':
           description: Type introuvable
-        409:
+        '409':
           description: Ce type est utilisé par une chambre
+
   /bedtypes:
     get:
       summary: Lister les types de lit (pour la liste déroulante)
       responses:
-        200:
+        '200':
           description: Liste des types de lit
           content:
             application/json:
@@ -420,6 +555,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/BedType'
+
   /bedtype:
     post:
       summary: Créer un type de lit
@@ -430,16 +566,17 @@ paths:
             schema:
               $ref: '#/components/schemas/BedTypeRequest'
       responses:
-        201:
+        '201':
           description: Type de lit créé
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BedType'
-        400:
+        '400':
           description: Description manquante
-        409:
+        '409':
           description: Ce type existe déjà
+
   /bedtype/{id}:
     parameters:
       - name: id
@@ -456,30 +593,31 @@ paths:
             schema:
               $ref: '#/components/schemas/BedTypeRequest'
       responses:
-        200:
+        '200':
           description: Type modifié
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BedType'
-        404:
+        '404':
           description: Type introuvable
-        409:
+        '409':
           description: Ce type existe déjà
     delete:
       summary: Supprimer un type de lit
       responses:
-        204:
+        '204':
           description: Type supprimé
-        404:
+        '404':
           description: Type introuvable
-        409:
+        '409':
           description: Ce type est utilisé par une chambre
+
   /bedrooms:
     get:
       summary: Lister les chambres
       responses:
-        200:
+        '200':
           description: Liste des chambres
           content:
             application/json:
@@ -487,6 +625,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/BedRoom'
+
   /bedroom:
     post:
       summary: Créer une chambre
@@ -509,20 +648,21 @@ paths:
               price: 120.00
               nomHotel: "Hôtel Rickel"
       responses:
-        201:
+        '201':
           description: Chambre créée
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BedRoom'
-        400:
+        '400':
           description: Données invalides ou référence inconnue (type de chambre, type de lit, numéro déjà pris)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
-        500:
+        '500':
           description: Erreur serveur
+
   /bedroom/{id}:
     parameters:
       - name: id
@@ -533,13 +673,13 @@ paths:
     get:
       summary: Récupérer une chambre
       responses:
-        200:
+        '200':
           description: Chambre trouvée
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BedRoom'
-        404:
+        '404':
           description: Chambre introuvable
     patch:
       summary: Modifier une chambre (champs facultatifs)
@@ -550,20 +690,20 @@ paths:
             schema:
               $ref: '#/components/schemas/UpdateBedRoomRequest'
       responses:
-        200:
+        '200':
           description: Chambre modifiée
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BedRoom'
-        400:
+        '400':
           description: Référence inconnue ou numéro déjà pris
-        404:
+        '404':
           description: Chambre introuvable
     delete:
       summary: Supprimer une chambre
       responses:
-        204:
+        '204':
           description: Chambre supprimée
-        404:
+        '404':
           description: Chambre introuvable

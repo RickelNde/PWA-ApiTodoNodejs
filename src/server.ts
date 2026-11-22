@@ -16,12 +16,14 @@ import { createRoomTypeRoutes } from './routes/roomtype.routes';
 import { createBedTypeRoutes } from './routes/bedtype.routes';
 import { createBedRoomRoutes } from './routes/bedroom.routes';
 import { createAuthRoutes } from './routes/auth.routes';
+import cookieParser from 'cookie-parser';
 
 
 dotenv.config();
 
-const app = express();
+export const app = express();
 const port = process.env.PORT || 3001;
+app.use(cookieParser());
 app.use(helmet());
 app.use(cors({
   origin: '*',
@@ -31,20 +33,20 @@ app.use(cors({
 app.use(express.json());
 app.set('trust proxy', 1);
 
-const sessionConfig = {
-  name: 'userAuth',
-  secret: process.env.SESSION_SECRET || 'dev-secret-a-changer',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    maxAge: 1000 * 60 * 60,
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    sameSite: 'lax' as const,
-  },
-};
+// const sessionConfig = {
+//   name: 'userAuth',
+//   secret: process.env.SESSION_SECRET || 'dev-secret-a-changer',
+//   resave: false,
+//   saveUninitialized: false,
+//   cookie: {
+//     maxAge: 1000 * 60 * 60,
+//     secure: process.env.NODE_ENV === 'production',
+//     httpOnly: true,
+//     sameSite: 'lax' as const,
+//   },
+// };
 
-app.use(session(sessionConfig));
+// app.use(session(sessionConfig));
 
 app.use('/api/auth', createAuthRoutes());
 app.use('/api', createTodoRoutes());

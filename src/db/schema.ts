@@ -62,3 +62,25 @@ export const bedRooms = mysqlTable('bedRooms', {
   updated_At: timestamp('updated_At').defaultNow().onUpdateNow().notNull(),
   
 }); 
+
+export const reservation = mysqlTable('reservation', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  beginingAt: timestamp('beginingAt').notNull(),
+  endAt: timestamp('endAt').notNull(),
+
+  userId: varchar('userId', { length: 36 })
+    .notNull()
+    .references(() => users.id),
+
+  bedroomId: varchar('bedroomId', { length: 36 })
+    .notNull()
+    .references(() => bedRooms.id),
+
+  nbPersonnes: int('nb_personnes').notNull(),
+
+  transactionId: varchar('transactionId', { length: 100 }).unique(),
+  status: varchar('status', { length: 20 }).notNull().default('pending'),
+
+  created_At: timestamp('created_At').defaultNow().notNull(),
+  updated_At: timestamp('updated_At').defaultNow().onUpdateNow().notNull(),
+});
