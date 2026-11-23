@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { BedRoomService } from '../services/bedroom.service';
 import { CreateBedRoomRequest, UpdateBedRoomRequest } from '../types/bedroom';
 
@@ -6,76 +6,84 @@ const bedRoomService = new BedRoomService();
 
 export class BedRoomController {
 
-  getAll = async (req: Request, res: Response) => {
+  getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const bedRooms = await bedRoomService.getAllBedRooms();
-      res.json(bedRooms);
+      res.status(200).json(bedRooms);
     } catch (error) {
-      res.status(500).json({ message: 'Erreur serveur.' });
+      next(error);
     }
   };
 
-  getById = async (req: Request, res: Response) => {
+  getById = async (req: Request<{ id: string }>, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const bedRoom = await bedRoomService.getBedRoomById(req.params.id as string);
+      const id = req.params.id;
+      const bedRoom = await bedRoomService.getBedRoomById(id);
       if (!bedRoom) {
-        return res.status(404).json({ message: 'Chambre introuvable.' });
+        res.status(404).json({ message: 'Chambre introuvable.' });
+        return;
       }
-      res.json(bedRoom);
+      res.status(200).json(bedRoom);
     } catch (error) {
-      res.status(500).json({ message: 'Erreur serveur.' });
+      next(error);
     }
   };
 
-  create = async (req: Request, res: Response) => {
-  const data = req.body as CreateBedRoomRequest;
+  create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const data = req.body as CreateBedRoomRequest;
 
-  if (
-    data.bedroomsNumber === undefined || !data.roomTypeId || !data.description ||
-    data.nbMaxClients === undefined || data.sizeInMeterSquare === undefined ||
-    data.nbBeds === undefined || !data.bed1Id || data.price === undefined || !data.nomHotel
-  ) {
-    return res.status(400).json({ message: 'Champs obligatoires manquants.' });
-  }
+    if (
+      data.bedroomsNumber === undefined || !data.roomTypeId || !data.description ||
+      data.nbMaxClients === undefined || data.sizeInMeterSquare === undefined ||
+      data.nbBeds === undefined || !data.bed1Id || data.price === undefined || !data.nomHotel
+    ) {
+      res.status(400).json({ message: 'Champs obligatoires manquants.' });
+      return;
+    }
 
-  if (data.nbBeds === 1) {
-    data.bed2Id = null;
-  }
-  if (data.nbBeds === 2 && !data.bed2Id) {
-    return res.status(400).json({ message: 'bed2Id est requis pour 2 lits.' });
-  }
+    if (data.nbBeds === 1) {
+      data.bed2Id = null;
+    }
+    if (data.nbBeds === 2 && !data.bed2Id) {
+      res.status(400).json({ message: 'bed2Id est requis pour 2 lits.' });
+      return;
+    }
 
-  try {
-    const bedRoom = await bedRoomService.createBedRoom(data);
-    res.status(201).json(bedRoom);
-  } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur.' });
-  }
-};
+    try {
+      const bedRoom = await bedRoomService.createBedRoom(data);
+      res.status(201).json(bedRoom);
+    } catch (error) {
+      next(error);
+    }
+  };
 
-  update = async (req: Request, res: Response) => {
+  update = async (req: Request<{ id: string }>, res: Response, next: NextFunction): Promise<void> => {
     const data = req.body as UpdateBedRoomRequest;
 
     try {
-      const bedRoom = await bedRoomService.updateBedRoom(req.params.id as string, data);
+      const id = req.params.id;
+      const bedRoom = await bedRoomService.updateBedRoom(id, data);
       if (!bedRoom) {
-        return res.status(404).json({ message: 'Chambre introuvable.' });
+        res.status(404).json({ message: 'Chambre introuvable.' });
+        return;
       }
-      res.json(bedRoom);
+      res.status(200).json(bedRoom);
     } catch (error) {
-      res.status(500).json({ message: 'Erreur serveur.' });
+      next(error);
     }
   };
 
-  delete = async (req: Request, res: Response) => {
+  delete = async (req: Request<{ id: string }>, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const bedRoom = await bedRoomService.deleteBedRoom(req.params.id as string);
+      const id = req.params.id;
+      const bedRoom = await bedRoomService.deleteBedRoom(id);
       if (!bedRoom) {
-        return res.status(404).json({ message: 'Chambre introuvable.' });
+        res.status(404).json({ message: 'Chambre introuvable.' });
+        return;
       }
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: 'Erreur serveur.' });
+      next(error);
     }
   };
 }

@@ -111,22 +111,4 @@ if (data.endAt) {
   return existant;
 }
 
-  // PAYER
-//   async payement(id: string) {
-//     const reservation = await reservationRepository.findById(id);
-//     if (!reservation) {
-//       throw new Error('RESERVATION_INTROUVABLE');
-//     }
-
-//     const chambre = await bedRoomService.getBedRoomById(reservation.bedroomId);
-//     if (!chambre) {
-//       throw new Error('CHAMBRE_INTROUVABLE');
-//     }
-
-//     const transactionId = await demanderTransactionId(Number(chambre.price));
-//     await reservationRepository.updateTransaction(id, transactionId, 'pending');
-
-//     const status = await confirmerTransaction(transactionId);
-//     return reservationRepository.updateTransaction(id, transactionId, status);
-//   }
 }

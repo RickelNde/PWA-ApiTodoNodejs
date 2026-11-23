@@ -23,7 +23,7 @@ export class AuthController {
    }
 
     if (userRequest.email.length < 3) {
-       res.status(400).json({ message: 'Le nom d’utilisateur doit contenir au moins 3 caractères.' });
+       res.status(400).json({ message: 'L email doit contenir au moins 3 caractères.' });
        return
     }
     if (userRequest.passWord.length < 8) {

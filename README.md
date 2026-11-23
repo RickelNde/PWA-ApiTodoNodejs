@@ -50,3 +50,5 @@ J'aimerais que tu déploies cet API sur un VPS digital ocean. Les contraintes so
   - Soit tu lance le serveur avec une ligne dans ce genre : `PORT=3001 NODE_ENV=production DB_HOST=localhost ...ETC..... node dist/server.js`
 ## Validation des champs
   https://react-hook-form.com/get-started#ReactNative
+  ## creation d'un session avant les tests
+  https://github.com/forwardemail/supertest/issues/46

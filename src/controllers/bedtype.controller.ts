@@ -1,53 +1,57 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { BedTypeService } from '../services/bedtype.service';
 
 const bedTypeService = new BedTypeService();
 
 export class BedTypeController {
 
-  getAll = async (req: Request, res: Response) => {
+  getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const types = await bedTypeService.getAllBedTypes();
-      res.json(types);
+      res.status(200).json(types);
     } catch (error) {
-      res.status(500).json({ message: 'Erreur serveur.' });
+      next(error);
     }
   };
 
-  create = async (req: Request, res: Response) => {
+  create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { description } = req.body;
 
     try {
       const type = await bedTypeService.createBedType(description);
       res.status(201).json(type);
     } catch (error) {
-      res.status(500).json({ message: 'Erreur serveur.' });
+      next(error);
     }
   };
 
-  update = async (req: Request, res: Response) => {
+  update = async (req: Request<{ id: string }>, res: Response, next: NextFunction): Promise<void> => {
     const { description } = req.body;
 
     try {
-      const type = await bedTypeService.updateBedType(req.params.id as string, description);
+      const id = req.params.id;
+      const type = await bedTypeService.updateBedType(id, description);
       if (!type) {
-        return res.status(404).json({ message: 'Type de lit introuvable.' });
+        res.status(404).json({ message: 'Type de lit introuvable.' });
+        return;
       }
-      res.json(type);
+      res.status(200).json(type);
     } catch (error) {
-      res.status(500).json({ message: 'Erreur serveur.' });
+      next(error);
     }
   };
 
-  delete = async (req: Request, res: Response) => {
+  delete = async (req: Request<{ id: string }>, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const type = await bedTypeService.deleteBedType(req.params.id as string);
+      const id = req.params.id;
+      const type = await bedTypeService.deleteBedType(id);
       if (!type) {
-        return res.status(404).json({ message: 'Type de lit introuvable.' });
+        res.status(404).json({ message: 'Type de lit introuvable.' });
+        return;
       }
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: 'Erreur serveur.' });
+      next(error);
     }
   };
 }
