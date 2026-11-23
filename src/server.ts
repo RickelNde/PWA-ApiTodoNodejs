@@ -17,6 +17,7 @@ import { createBedTypeRoutes } from './routes/bedtype.routes';
 import { createBedRoomRoutes } from './routes/bedroom.routes';
 import { createAuthRoutes } from './routes/auth.routes';
 import cookieParser from 'cookie-parser';
+import { createReservationRoutes } from './routes/reservation.routes';
 
 
 dotenv.config();
@@ -54,6 +55,7 @@ app.use('/', createHealthRoutes());
 app.use('/api', createRoomTypeRoutes());
 app.use('/api', createBedTypeRoutes());
 app.use('/api', createBedRoomRoutes());
+app.use('/api', createReservationRoutes());
 
 app.use(
   '/swagger',

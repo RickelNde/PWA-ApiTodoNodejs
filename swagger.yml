@@ -238,6 +238,81 @@ components:
           type: string
           example: "Lit king size"
 
+    Reservation:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "7f3c2a1e-9b4d-4e8a-8f2c-1a2b3c4d5e6f"
+        beginingAt:
+          type: string
+          format: date-time
+          example: "2026-12-01T14:00:00.000Z"
+        endAt:
+          type: string
+          format: date-time
+          example: "2026-12-05T10:00:00.000Z"
+        userId:
+          type: string
+          example: "43ad8dea-1b90-4853-811e-d7b14d0d1860"
+        bedroomId:
+          type: string
+          example: "b3c1d2e4-5f6a-4b7c-8d9e-0f1a2b3c4d5e"
+        nbPersonnes:
+          type: integer
+          example: 2
+        transactionId:
+          type: string
+          nullable: true
+          example: "TX-123456"
+        status:
+          type: string
+          enum: [pending, approved, declined]
+          example: "pending"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateReservationRequest:
+      type: object
+      required: [userId, bedroomId, nbPersonnes, beginingAt, endAt]
+      properties:
+        userId:
+          type: string
+          example: "43ad8dea-1b90-4853-811e-d7b14d0d1860"
+        bedroomId:
+          type: string
+          example: "b3c1d2e4-5f6a-4b7c-8d9e-0f1a2b3c4d5e"
+        nbPersonnes:
+          type: integer
+          example: 2
+        beginingAt:
+          type: string
+          format: date-time
+          example: "2026-12-01T14:00:00.000Z"
+        endAt:
+          type: string
+          format: date-time
+          example: "2026-12-05T10:00:00.000Z"
+
+    UpdateReservationRequest:
+      type: object
+      description: Tous les champs sont facultatifs
+      properties:
+        bedroomId:
+          type: string
+        nbPersonnes:
+          type: integer
+        beginingAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+
 paths:
   /todos:
     get:
@@ -628,8 +703,10 @@ paths:
 
   /bedroom:
     post:
-      summary: Créer une chambre
+      summary: Créer une chambre (admin seulement)
       description: Si nbBeds = 2, bed2Id est obligatoire. Si nbBeds = 1, bed2Id est ignoré.
+      security:
+        - cookieAuth: []
       requestBody:
         required: true
         content:
@@ -660,6 +737,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
+        '401':
+          description: Non connecté ou connexion expirée
+        '403':
+          description: Réservé aux admins
         '500':
           description: Erreur serveur
 
@@ -671,7 +752,9 @@ paths:
         schema:
           type: string
     get:
-      summary: Récupérer une chambre
+      summary: Récupérer une chambre (connecté, user ou admin)
+      security:
+        - cookieAuth: []
       responses:
         '200':
           description: Chambre trouvée
@@ -679,10 +762,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BedRoom'
+        '401':
+          description: Non connecté ou connexion expirée
         '404':
           description: Chambre introuvable
     patch:
-      summary: Modifier une chambre (champs facultatifs)
+      summary: Modifier une chambre (admin seulement)
+      security:
+        - cookieAuth: []
       requestBody:
         required: true
         content:
@@ -698,12 +785,177 @@ paths:
                 $ref: '#/components/schemas/BedRoom'
         '400':
           description: Référence inconnue ou numéro déjà pris
+        '401':
+          description: Non connecté ou connexion expirée
+        '403':
+          description: Réservé aux admins
         '404':
           description: Chambre introuvable
     delete:
-      summary: Supprimer une chambre
+      summary: Supprimer une chambre (admin seulement)
+      security:
+        - cookieAuth: []
       responses:
         '204':
           description: Chambre supprimée
+        '401':
+          description: Non connecté ou connexion expirée
+        '403':
+          description: Réservé aux admins
         '404':
           description: Chambre introuvable
+
+  /reservations:
+    get:
+      summary: Lister les réservations (connecté, user ou admin)
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Liste des réservations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reservation'
+        '401':
+          description: Non connecté ou connexion expirée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+
+  /reservation:
+    post:
+      summary: Créer une réservation (connecté, user ou admin)
+      description: Le prix vient de la chambre, il n'est pas envoyé par le client. La réservation est créée en statut pending.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReservationRequest'
+      responses:
+        '201':
+          description: Réservation créée (status pending)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '400':
+          description: Champs manquants, dates invalides ou trop de personnes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '401':
+          description: Non connecté ou connexion expirée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '404':
+          description: Chambre introuvable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+
+  /reservation/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Récupérer une réservation (connecté, user ou admin)
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Réservation trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '401':
+          description: Non connecté ou connexion expirée
+        '404':
+          description: Réservation introuvable
+    patch:
+      summary: Modifier une réservation (connecté, user ou admin)
+      description: Impossible si la réservation est déjà payée (approved)
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReservationRequest'
+      responses:
+        '200':
+          description: Réservation modifiée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '400':
+          description: Dates invalides ou trop de personnes
+        '401':
+          description: Non connecté ou connexion expirée
+        '404':
+          description: Réservation ou chambre introuvable
+        '409':
+          description: Réservation déjà payée
+    delete:
+      summary: Supprimer une réservation (admin seulement)
+      description: Impossible si la réservation est déjà payée (approved)
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Réservation supprimée
+        '401':
+          description: Non connecté ou connexion expirée
+        '403':
+          description: Réservé aux admins
+        '404':
+          description: Réservation introuvable
+        '409':
+          description: Réservation déjà payée
+
+  /reservation/{id}/paiement:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Payer une réservation auprès de la banque (connecté, user ou admin)
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Paiement approuvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '401':
+          description: Non connecté ou connexion expirée
+        '404':
+          description: Réservation introuvable
+        '422':
+          description: Paiement refusé par la banque
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '502':
+          description: Erreur de communication avec la banque

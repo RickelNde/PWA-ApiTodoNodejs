@@ -54,7 +54,7 @@ export const bedRooms = mysqlTable('bedRooms', {
     .notNull()
     .references(() => bedType.id),
   bed2Id: varchar("bed2_id", { length: 36 })
-    .references(() => bedType.id), // nullable
+    .references(() => bedType.id), 
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   nomHotel: varchar("nom_hotel", { length: 100 }).notNull(),
 
