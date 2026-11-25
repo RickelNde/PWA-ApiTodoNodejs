@@ -55,4 +55,9 @@ export class BedRoomService {
     await bedRoomRepository.delete(id);
     return existing;
   }
+
+  
+   async getHotelRooms() {
+    return await bedRoomRepository.findHotelRooms();
+  }
 }

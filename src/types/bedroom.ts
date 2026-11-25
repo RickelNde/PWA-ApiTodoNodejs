@@ -31,3 +31,12 @@ export interface CreateBedRoomRequest {
 export interface UpdateBedRoomRequest {
   bedroomsNumber?: number;
 }
+export interface HotelRoomResponse {
+    noChamber: string;
+    size: string;
+    bedType1: string;
+    bedType2?: string;
+    price: string;
+    dateAvailableStart: Date;
+    dateAvailableEnd: Date;
+}

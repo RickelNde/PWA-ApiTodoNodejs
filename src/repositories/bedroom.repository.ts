@@ -1,7 +1,12 @@
 import { eq } from 'drizzle-orm';
-import { bedRooms } from '../db/schema';
+import { alias } from 'drizzle-orm/mysql-core';
+import { bedRooms, bedType, reservation } from '../db/schema';
 import { db } from '../db/connection';
 import { BedRoom, UpdateBedRoomRequest } from '../types/bedroom';
+import type { HotelRoomResponse } from '../types/bedroom';
+
+const bed1 = alias(bedType, 'bed1');
+const bed2 = alias(bedType, 'bed2');
 
 export class BedRoomRepository {
 
@@ -40,15 +45,42 @@ export class BedRoomRepository {
   }
 
   async update(id: string, data: UpdateBedRoomRequest): Promise<BedRoom | null> {
-  await db.update(bedRooms).set({
-    bedroomsNumber: data.bedroomsNumber,
-  }).where(eq(bedRooms.id, id));
+    await db.update(bedRooms).set({
+      bedroomsNumber: data.bedroomsNumber,
+    }).where(eq(bedRooms.id, id));
 
-  return this.findById(id);
-}
+    return this.findById(id);
+  }
 
   async delete(id: string): Promise<void> {
     await db.delete(bedRooms).where(eq(bedRooms.id, id));
+  }
+
+  async findHotelRooms(): Promise<HotelRoomResponse[]> {
+    const rows = await db
+      .select({
+        noChamber: bedRooms.bedroomsNumber,
+        size: bedRooms.sizeInMeterSquare,
+        bedType1: bed1.description,
+        bedType2: bed2.description,
+        price: bedRooms.price,
+        dateAvailableStart: reservation.beginingAt,
+        dateAvailableEnd: reservation.endAt,
+      })
+      .from(bedRooms)
+      .innerJoin(bed1, eq(bedRooms.bed1Id, bed1.id))
+      .leftJoin(bed2, eq(bedRooms.bed2Id, bed2.id))
+      .leftJoin(reservation, eq(reservation.bedroomId, bedRooms.id));
+
+    return rows.map((row) => ({
+      noChamber: String(row.noChamber),
+      size: row.size,
+      bedType1: row.bedType1,
+      bedType2: row.bedType2 ?? undefined,
+      price: row.price,
+      dateAvailableStart: row.dateAvailableStart!,
+      dateAvailableEnd: row.dateAvailableEnd!,
+    }));
   }
 
   private mapToBedRoom(row: any): BedRoom {

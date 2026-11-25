@@ -86,4 +86,13 @@ export class BedRoomController {
       next(error);
     }
   };
+
+  async getHotelRooms(req: Request, res: Response) {
+    try {
+      const chambres = await bedRoomService.getHotelRooms();
+      res.status(200).json(chambres);
+    } catch (error) {
+      res.status(500).json({ message: 'Erreur lors de la récupération des chambres' });
+    }
+  }
 }
